@@ -1,7 +1,7 @@
 services:
   web:
     build: .
-    container_name: mitid-app
+    container_name: premises-mfareset-app
 
     environment:
       - SQLITE_PATH=/data/db.sqlite3
@@ -14,7 +14,7 @@ services:
       - LOG_LEVEL_DJANGO=${LOG_LEVEL_DJANGO:-INFO}
       
     volumes:
-      - mitid-data:/data
+      - premises-mfareset-data:/data
 
     restart: unless-stopped
 
@@ -25,5 +25,5 @@ services:
       retries: 10
 
 volumes:
-  mitid-data:
+  premises-mfareset-data:
 
