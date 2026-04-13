@@ -105,3 +105,27 @@ def delete_user_authentication_method(
         )
 
     graph_delete(url)
+
+
+# Used by .active_directory.utils.azure_user_is_synced_with_on_premise_user
+def get_user(
+    *,
+    user_principal_name: str,
+    select_parameters: str | None = None,
+) -> dict[str, Any]:
+    """
+    Example:
+        get_user(
+            user_principal_name="<user>@dtu.dk",
+            select_parameters="$select=onPremisesImmutableId"
+        )
+    """
+    if select_parameters:
+        url = (
+            "https://graph.microsoft.com/v1.0/"
+            f"users/{user_principal_name}?{select_parameters}"
+        )
+    else:
+        url = f"https://graph.microsoft.com/v1.0/users/{user_principal_name}"
+
+    return graph_get(url)
