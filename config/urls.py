@@ -17,7 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from premises_mfareset.views import home, profile, reset_mfa
-# import django_cas_ng.views
+from premises_mfareset.views import (
+    home,
+    entra_login,
+    auth_callback,
+    profile,
+    entra_logout,
+)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,7 +33,9 @@ urlpatterns = [
 
     path("reset-mfa/", reset_mfa, name="reset_mfa"),
 
-    # path("accounts/login/", django_cas_ng.views.LoginView.as_view(), name="cas_ng_login"),
-    # path("accounts/logout/", django_cas_ng.views.LogoutView.as_view(), name="cas_ng_logout"),
+    path("auth/login/", entra_login, name="entra_login"),
+    path("auth/logout/", entra_logout, name="entra_logout"),
+    path("auth/callback/", auth_callback, name="auth_callback"),
+
 ]
 

@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 VALID_LOG_LEVELS = {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"}
 
-LOG_LEVEL_DJANGO = os.getenv("LOG_LEVEL_DJANGO").upper()
+LOG_LEVEL_DJANGO = os.getenv("LOG_LEVEL_DJANGO", "INFO").upper()
 
 if LOG_LEVEL_DJANGO not in VALID_LOG_LEVELS:
     raise ValueError(f"Invalid LOG_LEVEL_DJANGO: {LOG_LEVEL_DJANGO}")

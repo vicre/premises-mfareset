@@ -23,8 +23,16 @@
       "request": "launch",
       "type": "chrome",
       "url": "http://localhost:8000",
-      "webRoot": "${workspaceFolder}/core",
+      "webRoot": "${workspaceFolder}/premises_mfareset",
       "disableNetworkCache": true
+    },
+    {
+      "name": "Browser Ubuntu",
+      "type": "chrome",
+      "request": "launch",
+      "runtimeExecutable": "/usr/bin/google-chrome",
+      "url": "http://localhost:8000",
+      "webRoot": "${workspaceFolder}/premises_mfareset"
     },
     {
       "name": "Run Test Script",
@@ -41,10 +49,17 @@
   ],
   "compounds": [
     {
-      "name": "Start Server and Browser",
+      "name": "Start Server and Browser (Windows)",
       "configurations": [
         "Django: runserver",
-        "Browser Windows",
+        "Browser Windows"
+      ]
+    },
+    {
+      "name": "Start Server and Browser (Ubuntu)",
+      "configurations": [
+        "Django: runserver",
+        "Browser Ubuntu"
       ]
     }
   ]
