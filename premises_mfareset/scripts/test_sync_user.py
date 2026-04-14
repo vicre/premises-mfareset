@@ -36,28 +36,6 @@ def run(*args):
     )
 
     user_is_member = user_is_member_of_admin_group_in_ad(azure_user_principal_name)
-    # users = active_directory_query(
-    #     base_dn="DC=win,DC=dtu,DC=dk",
-    #     search_filter="(&(objectClass=user)(userPrincipalName=vicre@dtu.dk))",
-    #     search_attributes=["distinguishedName", "userPrincipalName", "cn"],
-    #     limit=1,
-    # )
-    # user_dn = users[0]["distinguishedName"][0]
-    # groups = active_directory_query(
-    #     base_dn="OU=MFAResetAdmins,OU=Groups,OU=SOC,OU=CIS,OU=AIT,DC=win,DC=dtu,DC=dk",
-    #     search_filter="(objectClass=group)",
-    #     search_attributes=["distinguishedName", "cn"],
-    # )
-
-
-    # for group in groups:
-    #         group_name = group.get("cn", ["<unknown>"])[0]
-    #         members = group.get("member", [])
-
-    #         if user_dn in members:
-    #             print(f"User is member of group: {group_name}")
-    #             break
-
 
     if is_synced and user_is_member:
         print("User is authenticated / synced")
