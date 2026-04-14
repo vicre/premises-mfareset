@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout
 from django.shortcuts import redirect, render
 from django.http import HttpResponse
+from active_directory.utils.user_is_member_of_admin_group_in_ad import user_is_member_of_admin_group_in_ad
 from premises_mfareset.utils.graph import list_user_authentication_methods
 from premises_mfareset.utils.auth_methods import prepare_auth_methods
 from premises_mfareset.utils.reset_mfa import reset_mfa_methods
@@ -85,7 +86,10 @@ def reset_mfa(request):
 def entra_login(request):
     return redirect(build_auth_url())
 
-
+# The user is allowed to pass if:
+# 1. authorazition code is OK
+# 2. if user is synched with AD
+# 3. if user is member of any of the MFAResetAdmins groups in AD
 def auth_callback(request):
     # Check if the callback contains an error
     error = request.GET.get("error")
@@ -141,9 +145,7 @@ def auth_callback(request):
     if not is_synced:
         return HttpResponse("User is not synced with on-prem AD", status=403)
     #
-    #                                               #
     ####### Ends here ########
-    #                                               #
 
 
 
@@ -151,16 +153,10 @@ def auth_callback(request):
     #                                                                                                                               #
     ####### Check if user is member of any groups under OU=MFAResetAdmins,OU=Groups,OU=SOC,OU=CIS,OU=AIT,DC=win,DC=dtu,DC=dk ########
     #                                                                                                                               #
-    #
-
-
-
-    groups = active_directory_query(
-        search_filter="OU=MFAResetAdmins,OU=Groups,OU=SOC,OU=CIS,OU=AIT,DC=win,DC=dtu,DC=dk",
-        limit=1,
-    )
-
-
+    user_is_member_of_mfa_reset_group = user_is_member_of_admin_group_in_ad(email)
+    
+    if not user_is_member_of_mfa_reset_group:
+        return HttpResponse("User is not member of MFA reset group", status=403)
     
 
 
