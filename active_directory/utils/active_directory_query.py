@@ -14,7 +14,7 @@ def serialize_value(value):
     else:
         return value
 
-def active_directory_query(*, base_dn, search_filter, search_attributes=ALL_ATTRIBUTES, limit=None, excluded_attributes=[]):
+def active_directory_query(*, base_dn="DC=win,DC=dtu,DC=dk", search_filter, search_attributes=ALL_ATTRIBUTES, limit=None, excluded_attributes=[]):
     try:
         conn, message = active_directory_connect()
 

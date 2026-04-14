@@ -41,7 +41,9 @@
       "program": "${workspaceFolder}/manage.py",
       "args": [
         "runscript",
-        "test_script"
+        "test_script",
+        "--script-args",
+        "testtes@dtu.dk"
       ],
       "django": true,
       "justMyCode": true

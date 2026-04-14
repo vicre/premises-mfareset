@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login, logout
+from django.contrib.auth import get_user, login, logout
 from django.shortcuts import redirect, render
 from django.http import HttpResponse
+from active_directory.utils import azure_user_is_synced_with_on_premise_user
 from premises_mfareset.utils.graph import list_user_authentication_methods
 from premises_mfareset.utils.auth_methods import prepare_auth_methods
 from premises_mfareset.utils.reset_mfa import reset_mfa_methods
@@ -12,11 +13,7 @@ from premises_mfareset.utils.entra_auth import (
 import logging
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-from active_directory.utils.azure_user_is_synced_with_on_premise_user import (
-    azure_user_is_synced_with_on_premise_user,
-)
-from premises_mfareset.utils.graph import get_user
-from active_directory.utils.active_directory_query import active_directory_query
+
 
 logger = logging.getLogger(__name__)
 
@@ -87,14 +84,13 @@ def entra_login(request):
 
 
 def auth_callback(request):
-    # Check if the callback contains an error
     error = request.GET.get("error")
     if error:
         return HttpResponse(
             f"{error}: {request.GET.get('error_description', 'Unknown error')}",
             status=400,
         )
-    # Get the authorazition code from the url
+
     code = request.GET.get("code")
     if not code:
         return HttpResponse("Missing authorization code", status=400)
@@ -114,56 +110,44 @@ def auth_callback(request):
         or claims.get("sub")
     )
     email = claims.get("email") or claims.get("preferred_username") or ""
-    
-    #                                               #
-    ####### Check if user is synched with AD ########
-    #                                               #
-    #
-    # Get get user from Azure, with the on_premises_immutable_id property
-    select_param = "$select=onPremisesImmutableId"
+
+    if not username:
+        return HttpResponse("No username found in token claims", status=400)
+
+    # Keep the real Entra login identifier
+    azure_user_principal_name = username
+
+    # Derive sAMAccountName from left side of UPN
+    sam_accountname = azure_user_principal_name.split("@", 1)[0]
+
     try:
-        response = get_user(
-            user_principal_name=email,
-            select_parameters=select_param,
+        graph_user = get_user(
+            user_principal_name=azure_user_principal_name,
+            select_parameters="$select=displayName,userPrincipalName,onPremisesImmutableId",
         )
     except Exception as error:
-        print("User not found in Azure")
-        print("Error:", error)
-        return
-    
-    on_premises_immutable_id = response.get("onPremisesImmutableId")
+        return HttpResponse(
+            f"Could not validate Entra user against Graph: {error}",
+            status=403,
+        )
+
+    on_premises_immutable_id = graph_user.get("onPremisesImmutableId")
+    if not on_premises_immutable_id:
+        return HttpResponse(
+            "Access denied: user is not synced from on-premises Active Directory.",
+            status=403,
+        )
+
     is_synced = azure_user_is_synced_with_on_premise_user(
-        user_principal_name=email,
+        sam_accountname=sam_accountname,
         on_premises_immutable_id=on_premises_immutable_id,
     )
-    #
-    #
+
     if not is_synced:
-        return HttpResponse("User is not synced with on-prem AD", status=403)
-    #
-    #                                               #
-    ####### Ends here ########
-    #                                               #
-
-
-
-
-    #                                                                                                                               #
-    ####### Check if user is member of any groups under OU=MFAResetAdmins,OU=Groups,OU=SOC,OU=CIS,OU=AIT,DC=win,DC=dtu,DC=dk ########
-    #                                                                                                                               #
-    #
-
-
-
-    groups = active_directory_query(
-        search_filter="OU=MFAResetAdmins,OU=Groups,OU=SOC,OU=CIS,OU=AIT,DC=win,DC=dtu,DC=dk",
-        limit=1,
-    )
-
-
-    
-
-
+        return HttpResponse(
+            "Access denied: user is not an authenticated on-premises Active Directory user.",
+            status=403,
+        )
 
     user, _ = User.objects.get_or_create(
         username=username,
@@ -173,6 +157,7 @@ def auth_callback(request):
     login(request, user)
     request.session["entra_claims"] = claims
     request.session["access_token"] = result.get("access_token")
+
     return redirect("profile")
 
 

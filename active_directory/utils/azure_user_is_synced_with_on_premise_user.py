@@ -8,11 +8,11 @@ def convert_to_base64(byte_data):
 
 
 def azure_user_is_synced_with_on_premise_user(
-    sam_accountname: str,
+    user_principal_name: str,
     on_premises_immutable_id: str,
-):
+) -> bool:
     base_dn = "DC=win,DC=dtu,DC=dk"
-    search_filter = f"(sAMAccountName={sam_accountname})"
+    search_filter = f"(UserPrincipalName={user_principal_name})"
     search_attributes = ["mS-DS-ConsistencyGuid"]
 
     active_directory_response = active_directory_query(
@@ -34,4 +34,5 @@ def azure_user_is_synced_with_on_premise_user(
     print("Azure onPremisesImmutableId:", on_premises_immutable_id)
 
     return ms_ds_consistency_guid == on_premises_immutable_id
+
 
