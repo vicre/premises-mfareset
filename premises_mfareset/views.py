@@ -18,12 +18,48 @@ from active_directory.utils.azure_user_is_synced_with_on_premise_user import (
 )
 from premises_mfareset.utils.graph import get_user
 from active_directory.utils.active_directory_query import active_directory_query
+from active_directory.utils.get_user_mfa_admin_groups import get_user_mfa_admin_groups
+
+
 
 logger = logging.getLogger(__name__)
 
 
 def home(request):
     return render(request, "premises_mfareset/home.html")
+
+
+@login_required
+def my_mfa_admin_groups(request):
+    username = request.user.username.strip().lower()
+    if "@" not in username:
+        username = f"{username}@dtu.dk"
+
+    try:
+        raw_groups = get_user_mfa_admin_groups(username)
+
+        groups = []
+        for group in raw_groups:
+            groups.append({
+                "cn": group.get("cn", [""])[0],
+                "distinguished_name": group.get("distinguishedName", [""])[0],
+                "description": group.get("description", [""])[0] if group.get("description") else "",
+                "extension_attribute_1": group.get("extensionAttribute1", [""])[0] if group.get("extensionAttribute1") else "",
+                "ou_scopes": [
+                    item.strip()
+                    for item in (group.get("extensionAttribute1", [""])[0] if group.get("extensionAttribute1") else "").split(",")
+                    if item.strip()
+                ],
+            })
+
+        context = {
+            "user_upn": username,
+            "groups": groups,
+        }
+        return render(request, "premises_mfareset/my_mfa_admin_groups.html", context)
+
+    except Exception as exc:
+        return HttpResponse(f"Failed to load MFA admin groups: {exc}", status=500)
 
 
 

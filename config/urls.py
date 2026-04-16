@@ -22,6 +22,7 @@ from premises_mfareset.views import (
     entra_login,
     auth_callback,
     entra_logout,
+    my_mfa_admin_groups,
 )
 
 
@@ -29,6 +30,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("", home, name="home"),
 
+    
+    path("my-mfa-admin-groups/", my_mfa_admin_groups, name="my_mfa_admin_groups"),
+
+    # this is not a site, it is the button that reset mfa
     path("reset-mfa/", reset_mfa, name="reset_mfa"),
 
     path("auth/login/", entra_login, name="entra_login"),
