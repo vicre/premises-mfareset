@@ -1,8 +1,4 @@
-from pprint import pprint
-
-from active_directory.utils.active_directory_connect import active_directory_connect
-from active_directory.utils.active_directory_query import active_directory_query
-from premises_mfareset.scripts.test_sync_user import run as sync_user
+from .test_get_user_mfa_admin_groups import test_get_user_mfa_admin_groups
 
 def run(*args):
     email = args[0] if args else None
@@ -11,7 +7,7 @@ def run(*args):
         print("Missing email")
         return
 
-    sync_user(email)
+    test_get_user_mfa_admin_groups(*args)
 
 
     pass

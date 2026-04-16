@@ -43,7 +43,7 @@
         "runscript",
         "test_script",
         "--script-args",
-        "testtes@dtu.dk"
+        "vicre@dtu.dk"
       ],
       "django": true,
       "justMyCode": true
