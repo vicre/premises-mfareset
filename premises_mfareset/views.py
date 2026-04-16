@@ -65,41 +65,7 @@ def my_mfa_admin_groups(request):
 
 @login_required
 def reset_mfa(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
-
-    try:
-        username = request.user.username.strip().lower()
-        if "@" not in username:
-            username = f"{username}@dtu.dk"
-        methods = list_user_authentication_methods(username)
-        mfa_methods = prepare_auth_methods(methods)
-
-        message = reset_mfa_methods(username, mfa_methods)
-
-        return JsonResponse({
-            "success": True,
-            "message": message,
-        }, status=200)
-
-    except Exception as exc:
-        return JsonResponse({
-            "success": False,
-            "message": str(exc),
-        }, status=500)
-
-
-
-
-
-
-
-
-
-
-
-
-
+    pass
 
 
 
@@ -108,8 +74,6 @@ def reset_mfa(request):
 ### Azure login starter her ###
 def entra_login(request):
     return redirect(build_auth_url())
-
-
 
 # The user is allowed to pass if:
 # 1. authorazition code is OK
@@ -182,7 +146,6 @@ def auth_callback(request):
     request.session["entra_claims"] = claims
     request.session["access_token"] = result.get("access_token")
     return redirect("home")
-
 
 
 def entra_logout(request):
