@@ -16,29 +16,31 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from premises_mfareset.views import home, reset_mfa
 from premises_mfareset.views import (
-    home,
     entra_login,
     auth_callback,
     entra_logout,
     my_mfa_admin_groups,
+    reset_mfa,
+    scoreboard
 )
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", home, name="home"),
-
     
-    path("my-mfa-admin-groups/", my_mfa_admin_groups, name="my_mfa_admin_groups"),
+    path("", my_mfa_admin_groups, name="my_mfa_admin_groups"),
+    path("scoreboard/", scoreboard, name="scoreboard"),
 
-    # this is not a site, it is the button that reset mfa
+    # This is not a site. It is a POST AJAX event that is used by it is the button that reset mfa
     path("reset-mfa/", reset_mfa, name="reset_mfa"),
 
+    # Azure login boilerplate
     path("auth/login/", entra_login, name="entra_login"),
     path("auth/logout/", entra_logout, name="entra_logout"),
     path("auth/callback/", auth_callback, name="auth_callback"),
+
+
 
 ]
 

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}DTU MFA Reset{% endblock %}
+{% block header_subtitle %}MFA Admin-Service{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+        <div class="card shadow-sm border-0 position-relative custom-card">
+            <div class="card-body p-4 p-md-5">
+                <h1 class="text-danger fw-bold mb-2">MFA Reset</h1>
+                <p class="text-muted mb-4">
+                    Log in with MitID to change or reset your MFA methods.
+                </p>
+
+                {% if user.is_authenticated %}
+                <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
+                    <span class="check-icon">✓</span>
+                    <div>Logged in as <strong>{{ user.username }}</strong></div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-3 align-items-center pt-3 border-top">
+                    <a href="{% url 'my_mfa_admin_groups' %}" class="btn btn-danger btn-lg px-4">
+                        Go to MFA Reset
+                    </a>
+                    <a href="{% url 'entra_logout' %}" class="link-danger small">
+                        Log out
+                    </a>
+                </div>
+                {% else %}
+                <div class="d-flex flex-wrap gap-3 align-items-center pt-3 border-top">
+                    <a href="{% url 'entra_login' %}" class="btn btn-danger btn-lg px-4">
+                        Click here to start
+                    </a>
+                    <span class="text-muted small">
+                        You will be redirected to the DTU login page,<br>
+                        where you click <em>"Logon with MitID"</em>.
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

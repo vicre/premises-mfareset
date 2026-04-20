@@ -5,35 +5,10 @@
 {% block header_subtitle %}MFA Self-Service Admin{% endblock %}
 
 {% block content %}
-<style>
-    .question-label {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.1rem;
-        height: 1.1rem;
-        margin-left: 0.4rem;
-        border-radius: 50%;
-        background-color: #343a40; /* gray-black */
-        color: #fff;
-        font-size: 0.75rem;
-        font-weight: 700;
-        line-height: 1;
-        cursor: pointer;
-        border: 0;
-        vertical-align: middle;
-    }
-
-    .question-label:hover,
-    .question-label:focus {
-        background-color: #212529;
-        color: #fff;
-        outline: none;
-    }
-</style>
-
 <div class="row justify-content-center">
     <div class="col-12 col-xl-10">
+
+
 
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body p-4">
@@ -76,20 +51,7 @@
                             <td><code>{{ target_user.distinguished_name }}</code></td>
                         </tr>
                         <tr>
-                            <th>
-                                Detected OU
-                                <button
-                                    type="button"
-                                    class="question-label"
-                                    tabindex="0"
-                                    data-bs-toggle="popover"
-                                    data-bs-trigger="hover focus click"
-                                    data-bs-placement="right"
-                                    data-bs-container="body"
-                                    data-bs-content="Lorem ipsum dolor sit amet, consectetur adipiscing elit.">
-                                    ?
-                                </button>
-                            </th>
+                            <th>Detected OU</th>
                             <td>
                                 {% if target_ou %}
                                 <span class="badge text-bg-secondary">{{ target_ou }}</span>
@@ -99,20 +61,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th>
-                                Authorization
-                                <button
-                                    type="button"
-                                    class="question-label"
-                                    tabindex="0"
-                                    data-bs-toggle="popover"
-                                    data-bs-trigger="hover focus click"
-                                    data-bs-placement="right"
-                                    data-bs-container="body"
-                                    data-bs-content="Lorem ipsum dolor sit amet, consectetur adipiscing elit.">
-                                    ?
-                                </button>
-                            </th>
+                            <th>Authorization</th>
                             <td>
                                 {% if is_allowed %}
                                 <span class="badge text-bg-success">Allowed</span>

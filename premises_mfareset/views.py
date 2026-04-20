@@ -102,11 +102,6 @@ def _get_target_ou_from_dn(distinguished_name: str) -> str | None:
 
 
 
-
-def home(request):
-    return render(request, "premises_mfareset/home.html")
-
-
 @login_required
 def my_mfa_admin_groups(request):
     admin_upn = _normalize_upn(request.user.username)
@@ -151,7 +146,9 @@ def my_mfa_admin_groups(request):
         },
     )
 
-
+@login_required
+def scoreboard(request):
+    return render(request, "premises_mfareset/scoreboard.html")
 
 @login_required
 def reset_mfa(request):
