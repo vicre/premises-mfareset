@@ -304,11 +304,11 @@ def auth_callback(request):
     login(request, user)
     request.session["entra_claims"] = claims
     request.session["access_token"] = result.get("access_token")
-    return redirect("home")
+    return redirect("mfa_reset_page")
 
 
 def entra_logout(request):
     logout(request)
-    return redirect("home")
+    return redirect("mfa_reset_page")
 
 ### Azure login starter her ###
