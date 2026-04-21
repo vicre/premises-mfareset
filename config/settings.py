@@ -47,14 +47,15 @@ DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
+    "view.security.ait.dtu.dk"
     ]
 
 # Needs to be validated if this is needed, or has weaknesses, before being put in production
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
-# CSRF_TRUSTED_ORIGINS = [
-#     "https://mfa-dtu.vezit.net",
-# ]
+CSRF_TRUSTED_ORIGINS = [
+    "https://view.security.ait.dtu.dk",
+]
 
 
 ##### CAS (dtubase login portal) #####
