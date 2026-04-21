@@ -11,7 +11,7 @@ from premises_mfareset.utils.auth_methods import prepare_auth_methods
 def reset_mfa_methods(
     upn: str,
     methods_to_delete: list[dict[str, Any]],
-    verify_retries: int = 10,
+    verify_retries: int = 15,
     verify_delay_seconds: float = 2.0,
 ) -> str:
     """
