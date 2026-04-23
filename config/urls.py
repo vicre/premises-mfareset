@@ -22,8 +22,6 @@ from premises_mfareset.views import (
     entra_logout,
     mfa_reset_page,
     reset_mfa,
-    scoreboard,
-    about
 )
 
 
@@ -31,8 +29,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     path("", mfa_reset_page, name="mfa_reset_page"),
-    path("scoreboard/", scoreboard, name="scoreboard"),
-    path("about/", about, name="about"),
 
     # This is not a site. It is a POST AJAX event that is used by it is the button that reset mfa
     path("reset-mfa/", reset_mfa, name="reset_mfa"),
