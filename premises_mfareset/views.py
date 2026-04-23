@@ -19,6 +19,7 @@ from active_directory.utils.azure_user_is_synced_with_on_premise_user import (
 from premises_mfareset.utils.graph import get_user
 from active_directory.utils.active_directory_query import active_directory_query
 from active_directory.utils.get_user_mfa_admin_groups import get_user_mfa_admin_groups
+from .models import MfaResetAuditLog
 
 
 
@@ -103,6 +104,36 @@ def _get_target_ou_from_dn(distinguished_name: str) -> str | None:
     return None
 
 
+def _log_mfa_reset_event(
+    *,
+    request,
+    actor_upn: str = "",
+    target_upn: str = "",
+    target_display_name: str = "",
+    target_ou: str = "",
+    allowed_ous: list[str] | None = None,
+    status_code: int = 500,
+    success: bool = False,
+    message: str = "",
+    list_methods_payload=None,
+    prepared_methods_payload=None,
+    reset_result_payload=None,
+) -> None:
+    MfaResetAuditLog.objects.create(
+        actor=request.user if getattr(request, "user", None) and request.user.is_authenticated else None,
+        actor_upn=actor_upn or "",
+        target_upn=target_upn or "",
+        target_display_name=target_display_name or "",
+        target_ou=target_ou or "",
+        allowed_ous=", ".join(allowed_ous or []),
+        status_code=status_code,
+        success=success,
+        message=message or "",
+        list_methods_payload=list_methods_payload,
+        prepared_methods_payload=prepared_methods_payload,
+        reset_result_payload=reset_result_payload,
+    )
+
 
 
 @login_required
@@ -160,14 +191,33 @@ def mfa_reset_page(request):
 
 @login_required
 def reset_mfa(request):
+    admin_upn = _normalize_upn(request.user.username)
+    target_upn = _normalize_upn(request.POST.get("target_upn", "")) if request.method == "POST" else ""
+    allowed_ous: list[str] = []
+    target_user = None
+    target_ou = ""
+
     if request.method != "POST":
+        _log_mfa_reset_event(
+            request=request,
+            actor_upn=admin_upn,
+            target_upn=target_upn,
+            status_code=405,
+            success=False,
+            message="Method not allowed",
+        )
         return JsonResponse({"success": False, "message": "Method not allowed"}, status=405)
 
     try:
-        admin_upn = _normalize_upn(request.user.username)
-        target_upn = _normalize_upn(request.POST.get("target_upn", ""))
-
         if not target_upn:
+            _log_mfa_reset_event(
+                request=request,
+                actor_upn=admin_upn,
+                target_upn=target_upn,
+                status_code=400,
+                success=False,
+                message="Missing target_upn",
+            )
             return JsonResponse(
                 {"success": False, "message": "Missing target_upn"},
                 status=400,
@@ -177,36 +227,79 @@ def reset_mfa(request):
         allowed_ous = _extract_allowed_ous(raw_groups)
 
         if not allowed_ous:
+            message = "You are not allowed to reset MFA for any OU"
+            _log_mfa_reset_event(
+                request=request,
+                actor_upn=admin_upn,
+                target_upn=target_upn,
+                allowed_ous=allowed_ous,
+                status_code=403,
+                success=False,
+                message=message,
+            )
             return JsonResponse(
-                {"success": False, "message": "You are not allowed to reset MFA for any OU"},
+                {"success": False, "message": message},
                 status=403,
             )
 
         target_user = _get_target_user_from_ad(target_upn)
         if not target_user:
+            message = f"Target user not found: {target_upn}"
+            _log_mfa_reset_event(
+                request=request,
+                actor_upn=admin_upn,
+                target_upn=target_upn,
+                allowed_ous=allowed_ous,
+                status_code=404,
+                success=False,
+                message=message,
+            )
             return JsonResponse(
-                {"success": False, "message": f"Target user not found: {target_upn}"},
+                {"success": False, "message": message},
                 status=404,
             )
 
-        target_ou = _get_target_ou_from_dn(target_user["distinguished_name"])
+        target_ou = _get_target_ou_from_dn(target_user["distinguished_name"]) or ""
         if not target_ou:
+            message = "Target user is not under OU=DTUBaseUsers/<OU>/..."
+            _log_mfa_reset_event(
+                request=request,
+                actor_upn=admin_upn,
+                target_upn=target_upn,
+                target_display_name=target_user.get("display_name") or target_user.get("cn", ""),
+                allowed_ous=allowed_ous,
+                status_code=403,
+                success=False,
+                message=message,
+            )
             return JsonResponse(
                 {
                     "success": False,
-                    "message": "Target user is not under OU=DTUBaseUsers/<OU>/...",
+                    "message": message,
                 },
                 status=403,
             )
 
         if target_ou not in allowed_ous:
+            message = (
+                f"Not allowed. Target user is in OU '{target_ou}', "
+                f"allowed OUs are: {', '.join(allowed_ous)}"
+            )
+            _log_mfa_reset_event(
+                request=request,
+                actor_upn=admin_upn,
+                target_upn=target_upn,
+                target_display_name=target_user.get("display_name") or target_user.get("cn", ""),
+                target_ou=target_ou,
+                allowed_ous=allowed_ous,
+                status_code=403,
+                success=False,
+                message=message,
+            )
             return JsonResponse(
                 {
                     "success": False,
-                    "message": (
-                        f"Not allowed. Target user is in OU '{target_ou}', "
-                        f"allowed OUs are: {', '.join(allowed_ous)}"
-                    ),
+                    "message": message,
                 },
                 status=403,
             )
@@ -214,6 +307,21 @@ def reset_mfa(request):
         methods = list_user_authentication_methods(target_upn)
         mfa_methods = prepare_auth_methods(methods)
         message = reset_mfa_methods(target_upn, mfa_methods)
+
+        _log_mfa_reset_event(
+            request=request,
+            actor_upn=admin_upn,
+            target_upn=target_upn,
+            target_display_name=target_user.get("display_name") or target_user.get("cn", ""),
+            target_ou=target_ou,
+            allowed_ous=allowed_ous,
+            status_code=200,
+            success=True,
+            message=message,
+            list_methods_payload=methods,
+            prepared_methods_payload=mfa_methods,
+            reset_result_payload={"message": message},
+        )
 
         return JsonResponse(
             {
@@ -226,11 +334,24 @@ def reset_mfa(request):
         )
 
     except Exception as exc:
-        return JsonResponse(
-            {"success": False, "message": str(exc)},
-            status=500,
+        message = str(exc)
+
+        _log_mfa_reset_event(
+            request=request,
+            actor_upn=admin_upn,
+            target_upn=target_upn,
+            target_display_name=(target_user.get("display_name") or target_user.get("cn", "")) if target_user else "",
+            target_ou=target_ou,
+            allowed_ous=allowed_ous,
+            status_code=500,
+            success=False,
+            message=message,
         )
 
+        return JsonResponse(
+            {"success": False, "message": message},
+            status=500,
+        )
 
 
 
