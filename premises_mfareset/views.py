@@ -31,6 +31,7 @@ def _normalize_upn(value: str) -> str:
     return value
 
 
+
 def _extract_allowed_ous(groups: list[dict]) -> list[str]:
     allowed_ous = []
 
@@ -46,6 +47,7 @@ def _extract_allowed_ous(groups: list[dict]) -> list[str]:
                 allowed_ous.append(ou)
 
     return allowed_ous
+
 
 
 def _get_target_user_from_ad(target_upn: str) -> dict | None:
@@ -76,6 +78,7 @@ def _get_target_user_from_ad(target_upn: str) -> dict | None:
         "distinguished_name": entry.get("distinguishedName", [""])[0] if entry.get("distinguishedName") else "",
         "sam_account_name": entry.get("sAMAccountName", [""])[0] if entry.get("sAMAccountName") else "",
     }
+
 
 
 def _get_target_ou_from_dn(distinguished_name: str) -> str | None:
@@ -117,20 +120,26 @@ def mfa_reset_page(request):
             "description": group.get("description", [""])[0] if group.get("description") else "",
             "distinguished_name": group.get("distinguishedName", [""])[0] if group.get("distinguishedName") else "",
             "extension_attribute_1": ea_value,
-            "scopes": [item.strip() for item in ea_value.split(",") if item.strip()],
+            "scopes": [item.strip().upper() for item in ea_value.split(",") if item.strip()],
         })
 
     target_upn = _normalize_upn(request.GET.get("target_upn", ""))
     target_user = None
     target_ou = None
     is_allowed = False
+    authorizing_groups = []
 
     if target_upn:
         target_user = _get_target_user_from_ad(target_upn)
         if target_user:
             target_ou = _get_target_ou_from_dn(target_user["distinguished_name"])
-            if target_ou and target_ou in allowed_ous:
-                is_allowed = True
+            if target_ou:
+                authorizing_groups = [
+                    group["cn"]
+                    for group in groups
+                    if target_ou in group["scopes"]
+                ]
+                is_allowed = bool(authorizing_groups)
 
     return render(
         request,
@@ -143,16 +152,10 @@ def mfa_reset_page(request):
             "target_user": target_user,
             "target_ou": target_ou,
             "is_allowed": is_allowed,
+            "authorizing_groups": authorizing_groups,
         },
     )
 
-@login_required
-def about(request):
-    return render(request, "premises_mfareset/about.html")
-
-@login_required
-def scoreboard(request):
-    return render(request, "premises_mfareset/scoreboard.html")
 
 
 @login_required
@@ -227,6 +230,7 @@ def reset_mfa(request):
             {"success": False, "message": str(exc)},
             status=500,
         )
+
 
 
 
@@ -310,5 +314,4 @@ def auth_callback(request):
 def entra_logout(request):
     logout(request)
     return redirect("mfa_reset_page")
-
 ### Azure login starter her ###

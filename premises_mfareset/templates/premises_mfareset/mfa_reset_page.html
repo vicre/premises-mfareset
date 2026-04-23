@@ -83,10 +83,9 @@
                                     class="question-label"
                                     tabindex="0"
                                     data-bs-toggle="popover"
-                                    data-bs-trigger="hover focus click"
                                     data-bs-placement="right"
                                     data-bs-container="body"
-                                    data-bs-content="Lorem ipsum dolor sit amet, consectetur adipiscing elit.">
+                                    data-bs-content="{% if target_ou %}Brugeren blev fundet under OU {{ target_ou }} i DTUBaseUsers-strukturen.{% else %}Brugeren blev ikke fundet under OU=DTUBaseUsers/{OU}/...{% endif %}">
                                     ?
                                 </button>
                             </th>
@@ -106,10 +105,9 @@
                                     class="question-label"
                                     tabindex="0"
                                     data-bs-toggle="popover"
-                                    data-bs-trigger="hover focus click"
                                     data-bs-placement="right"
                                     data-bs-container="body"
-                                    data-bs-content="Du kan nulstille user@dtu.dk fordi du er medlem af gruppen GROUP i Active Directory">
+                                    data-bs-content="{% if is_allowed %}Du kan nulstille {{ target_user.user_principal_name }} fordi du er medlem af gruppen {{ authorizing_groups|join:', ' }} i Active Directory.{% else %}Du kan ikke nulstille {{ target_user.user_principal_name }} fordi ingen af dine MFA admin-grupper giver adgang til OU {{ target_ou|default:'ukendt' }}.{% endif %}">
                                     ?
                                 </button>
                             </th>

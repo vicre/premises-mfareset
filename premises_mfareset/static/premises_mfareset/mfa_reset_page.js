@@ -38,48 +38,68 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // #### This logic is for the question-label's #### starts here ####
 document.addEventListener("DOMContentLoaded", function () {
-    let activePopover = null;
-
+    let activeTrigger = null;
     const triggers = document.querySelectorAll('[data-bs-toggle="popover"]');
 
-    triggers.forEach(el => {
-        const popover = new bootstrap.Popover(el, {
-            trigger: 'manual',   // we control it ourselves
-            container: 'body'
+    triggers.forEach(trigger => {
+        const popover = new bootstrap.Popover(trigger, {
+            trigger: "manual",
+            container: "body",
+            html: false
         });
 
-        el.addEventListener('click', function (e) {
+        function showPopover() {
+            if (activeTrigger && activeTrigger !== trigger) {
+                bootstrap.Popover.getInstance(activeTrigger)?.hide();
+            }
+            popover.show();
+            activeTrigger = trigger;
+        }
+
+        function hidePopover() {
+            popover.hide();
+            if (activeTrigger === trigger) {
+                activeTrigger = null;
+            }
+        }
+
+        trigger.addEventListener("mouseenter", showPopover);
+        trigger.addEventListener("focus", showPopover);
+
+        trigger.addEventListener("mouseleave", function () {
+            setTimeout(() => {
+                const popoverEl = document.querySelector(".popover:hover");
+                if (!popoverEl) {
+                    hidePopover();
+                }
+            }, 100);
+        });
+
+        trigger.addEventListener("blur", hidePopover);
+
+        trigger.addEventListener("click", function (e) {
+            e.preventDefault();
             e.stopPropagation();
 
-            // Close currently open popover if it's not this one
-            if (activePopover && activePopover !== popover) {
-                activePopover.hide();
-            }
-
-            // Toggle current
-            if (activePopover === popover) {
-                popover.hide();
-                activePopover = null;
+            if (activeTrigger === trigger) {
+                hidePopover();
             } else {
-                popover.show();
-                activePopover = popover;
+                showPopover();
             }
         });
     });
 
-    // Click outside → close
-    document.addEventListener('click', function (e) {
-        if (!activePopover) return;
+    document.addEventListener("click", function (e) {
+        if (!activeTrigger) return;
 
-        const popoverEl = document.querySelector('.popover');
-
+        const popoverEl = document.querySelector(".popover");
         if (
             popoverEl &&
             !popoverEl.contains(e.target) &&
             !e.target.closest('[data-bs-toggle="popover"]')
         ) {
-            activePopover.hide();
-            activePopover = null;
+            bootstrap.Popover.getInstance(activeTrigger)?.hide();
+            activeTrigger = null;
         }
     });
 });
