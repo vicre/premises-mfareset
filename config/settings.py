@@ -48,6 +48,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     "mfareset-premises.security.ait.dtu.dk"
+    "preview-mfareset.security.ait.dtu.dk"
     ]
 
 # Needs to be validated if this is needed, or has weaknesses, before being put in production
