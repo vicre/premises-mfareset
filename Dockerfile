@@ -34,4 +34,3 @@ CMD ["sh", "-c", "python manage.py migrate && gunicorn config.wsgi:application \
   --error-logfile - \
   --log-level ${LOG_LEVEL_GUNICORN:-info} \
   --capture-output"]
-# CMD ["bash"]
