@@ -123,6 +123,73 @@
                 </table>
 
                 {% if is_allowed %}
+                
+                <h3 class="h5 mt-4">Authentication methods</h3>
+
+                {% if auth_methods %}
+                <table class="table table-sm table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Created</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for method in auth_methods %}
+                        <tr>
+                            <td>{{ method.odata_type }}</td>
+                            <td>{{ method.createdDateTime|default:"-" }}</td>
+                            <td>
+                                <details>
+                                    <summary>Show properties</summary>
+
+                                    <dl>
+
+                                        {% if method.id %}
+                                        <dt>ID</dt>
+                                        <dd><code>{{ method.id }}</code></dd>
+                                        {% endif %}
+
+                                        {% if method.displayName %}
+                                        <dt>Display name</dt>
+                                        <dd>{{ method.displayName }}</dd>
+                                        {% endif %}
+
+                                        {% if method.phoneNumber %}
+                                        <dt>Phone</dt>
+                                        <dd>{{ method.phoneNumber }}</dd>
+                                        {% endif %}
+
+                                        {% if method.phoneType %}
+                                        <dt>Phone type</dt>
+                                        <dd>{{ method.phoneType }}</dd>
+                                        {% endif %}
+
+                                        {% if method.smsSignInState %}
+                                        <dt>SMS sign-in state</dt>
+                                        <dd>{{ method.smsSignInState }}</dd>
+                                        {% endif %}
+
+                                        {% if method.keyStrength %}
+                                        <dt>Key strength</dt>
+                                        <dd>{{ method.keyStrength }}</dd>
+                                        {% endif %}
+
+                                    </dl>
+                                </details>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="alert alert-secondary">
+                    No authentication methods found.
+                </div>
+                {% endif %}
+
                 <form id="reset-mfa-form" method="post" action="{% url 'reset_mfa' %}">
                     {% csrf_token %}
                     <input type="hidden" name="target_upn" value="{{ target_user.user_principal_name }}">

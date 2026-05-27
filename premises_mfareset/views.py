@@ -172,6 +172,19 @@ def mfa_reset_page(request):
                 ]
                 is_allowed = bool(authorizing_groups)
 
+    # Allows the IT personal to see the user's auth methods
+    auth_methods = list_user_authentication_methods(target_upn)
+    
+    for method in auth_methods:
+
+        # Remove @ because the template cannot render it
+        method["odata_type"] = method.get("@odata.type")
+        method.pop("@odata.type")
+
+        # Remove the phoneNumber
+        if method.get("phoneNumber"):
+            method.pop("phoneNumber")
+
     return render(
         request,
         "premises_mfareset/mfa_reset_page.html",
@@ -184,6 +197,7 @@ def mfa_reset_page(request):
             "target_ou": target_ou,
             "is_allowed": is_allowed,
             "authorizing_groups": authorizing_groups,
+            "auth_methods": auth_methods,
         },
     )
 
