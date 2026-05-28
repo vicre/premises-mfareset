@@ -1,4 +1,3 @@
-Fix problem med at den timer ud før at Azure har registreret at metoderne er slettet
+Fix problem med at den timer ud før at Azure har registreret at metoderne er slettet : Har tilføjet en patch
 
 Tilføj dialog knap, når du sletter en mfa
-

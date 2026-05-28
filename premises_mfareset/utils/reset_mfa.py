@@ -12,7 +12,7 @@ def reset_mfa_methods(
     upn: str,
     methods_to_delete: list[dict[str, Any]],
     verify_retries: int = 15,
-    verify_delay_seconds: float = 2.0,
+    verify_delay_seconds: float = 4.0,
 ) -> str:
     """
     Deletes MFA methods one at a time.
