@@ -58,26 +58,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://mfareset-premises.security.ait.dtu.dk",
 ]
 
-
-##### CAS (dtubase login portal) #####
-# CAS_SERVER_URL = "https://auth2.dtu.dk/DTU/"
-# CAS_VERSION = "2"
-
-
-LOGIN_URL = "entra_login"
-LOGOUT_URL = "entra_logout"
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
-
-
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    # "django_cas_ng.backends.CASBackend",
 ]
-##### CAS (dtubase login portal) #####
 
 
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -87,7 +72,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Above is vanilla
-    # "django_cas_ng",
     "premises_mfareset",
 ]
 
@@ -107,7 +91,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Add CAS middleware, above is vanilla
-    # "django_cas_ng.middleware.CASMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'
