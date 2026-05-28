@@ -23,3 +23,10 @@ python manage.py runserver
 
 #### Notes
 prepare_auth_methods return all methods that this system is allowed to delete. e.g. not the password forexample
+
+On a fresh Coolify instance you have to run 
+```bash
+python manage.py makemigrations premises_mfareset
+python manage.py migrate
+```
+Otherwise the app will not work

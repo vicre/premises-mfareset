@@ -1,3 +1,4 @@
 Fix problem med at den timer ud før at Azure har registreret at metoderne er slettet
 
 Tilføj dialog knap, når du sletter en mfa
+
