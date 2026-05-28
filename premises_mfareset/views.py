@@ -199,6 +199,20 @@ def mfa_reset_page(request):
     is_allowed = False
     authorizing_groups = []
 
+
+    context = {
+            "admin_upn": admin_upn,
+            "groups": groups,
+            "allowed_ous": allowed_ous,
+            "target_upn": target_upn,
+            "target_user": target_user,
+            "target_ou": target_ou,
+            "is_allowed": is_allowed,
+            "authorizing_groups": authorizing_groups,
+
+        }
+
+
     if target_upn:
         target_user = _get_target_user_from_ad(target_upn)
         if target_user:
@@ -211,33 +225,26 @@ def mfa_reset_page(request):
                 ]
                 is_allowed = bool(authorizing_groups)
 
-        # Allows the IT personal to see the user's auth methods
-        auth_methods = list_user_authentication_methods(target_upn)
-        
-        for method in auth_methods:
+            # Allows the IT personal to see the user's auth methods
+            auth_methods = list_user_authentication_methods(target_upn)
+            
+            for method in auth_methods:
 
-            # Remove @ because the template cannot render it
-            method["odata_type"] = method.get("@odata.type")
-            method.pop("@odata.type")
+                # Remove @ because the template cannot render it
+                method["odata_type"] = method.get("@odata.type")
+                method.pop("@odata.type")
 
-            # Remove the phoneNumber
-            if method.get("phoneNumber"):
-                method.pop("phoneNumber")
+                # Remove the phoneNumber
+                if method.get("phoneNumber"):
+                    method.pop("phoneNumber")
+            
+            context["auth_methods"] = auth_methods
+
 
     return render(
         request,
         "premises_mfareset/mfa_reset_page.html",
-        {
-            "admin_upn": admin_upn,
-            "groups": groups,
-            "allowed_ous": allowed_ous,
-            "target_upn": target_upn,
-            "target_user": target_user,
-            "target_ou": target_ou,
-            "is_allowed": is_allowed,
-            "authorizing_groups": authorizing_groups,
-            "auth_methods": auth_methods,
-        },
+        context,
     )
 
 
