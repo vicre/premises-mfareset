@@ -30,10 +30,25 @@
         color: #fff;
         outline: none;
     }
+
+    #reset-confirmation {
+        border: 0;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        max-width: min(540px, calc(100% - 2rem));
+    }
+
+    #reset-confirmation::backdrop {
+        background: rgba(0, 0, 0, 0.45);
+    }
 </style>
 
 <div class="row justify-content-center">
     <div class="col-12 col-xl-10">
+
+        {% for message in messages %}
+        <div class="alert alert-success" role="status">{{ message }}</div>
+        {% endfor %}
 
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body p-4">
@@ -139,7 +154,7 @@
                     <tbody>
                         {% for method in auth_methods %}
                         <tr>
-                            <td>{{ method.odata_type }}</td>
+                            <td>{% if method.odata_type == "#microsoft.graph.fido2AuthenticationMethod" %}Passkey / FIDO2 security key{% else %}{{ method.odata_type }}{% endif %}</td>
                             <td>{{ method.createdDateTime|default:"-" }}</td>
                             <td>
                                 <details>
@@ -190,14 +205,38 @@
                 </div>
                 {% endif %}
 
-                <form id="reset-mfa-form" method="post" action="{% url 'reset_mfa' %}">
+                <form id="reset-mfa-form" method="post" action="{% url 'reset_mfa' %}" data-passkey-count="{{ fido2_count }}">
                     {% csrf_token %}
                     <input type="hidden" name="target_upn" value="{{ target_user.user_principal_name }}">
+                    <div class="border rounded bg-light p-3 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include_fido2"
+                                name="include_fido2" value="1" aria-describedby="fido2-help">
+                            <label class="form-check-label fw-semibold" for="include_fido2">
+                                Slet også passkeys / FIDO2-sikkerhedsnøgler
+                            </label>
+                        </div>
+                        <div class="small text-secondary mt-2" id="fido2-help">
+                            {{ fido2_count }} passkeys / FIDO2-sikkerhedsnøgler fundet.
+                            Når feltet er tomt, bevares de ved MFA-reset.
+                            Markér feltet for også at slette alle brugerens passkeys og FIDO2-sikkerhedsnøgler.
+                        </div>
+                    </div>
                     <button type="submit" class="btn btn-danger">
                         Reset MFA for {{ target_user.user_principal_name }}
                     </button>
                 </form>
-                <div id="reset-status" class="mt-3"></div>
+                <dialog id="reset-confirmation" class="shadow" aria-labelledby="reset-confirmation-title"
+                    aria-describedby="reset-confirmation-target reset-confirmation-scope">
+                    <h2 id="reset-confirmation-title" class="h5">Nulstil MFA?</h2>
+                    <p id="reset-confirmation-target" class="fw-semibold text-break"></p>
+                    <p id="reset-confirmation-scope"></p>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button id="cancel-reset" type="button" class="btn btn-outline-secondary" autofocus>Annuller</button>
+                        <button id="confirm-reset" type="button" class="btn btn-danger">Nulstil MFA</button>
+                    </div>
+                </dialog>
+                <div id="reset-status" class="mt-3" role="status" aria-live="polite"></div>
                 {% else %}
                 <div class="alert alert-warning mb-0">
                     You are not allowed to reset MFA for this user.

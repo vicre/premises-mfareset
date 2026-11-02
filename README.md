@@ -24,9 +24,26 @@ python manage.py runserver
 #### Notes
 prepare_auth_methods return all methods that this system is allowed to delete. e.g. not the password forexample
 
-On a fresh Coolify instance you have to run 
+On a fresh Coolify instance, apply the existing migrations:
 ```bash
-python manage.py makemigrations premises_mfareset
 python manage.py migrate
 ```
 Otherwise the app will not work
+
+## Passkeys / FIDO2
+
+MFA reset preserves passkeys by default. Select **Slet også passkeys /
+FIDO2-sikkerhedsnøgler** to also delete all passkeys and FIDO2 security keys for
+the selected user. The confirmation shows the target and scope. Password and
+Windows Hello methods remain excluded, and existing AD group/OU authorization
+still applies. The selected scope is recorded in the audit log.
+
+## Automated tests
+
+```bash
+python manage.py test --settings=config.test_settings
+```
+
+These tests use fake credentials, an in-memory database, and simulated Graph/AD
+responses. Outbound socket connections are blocked by the test runner. They do
+not reset real accounts.

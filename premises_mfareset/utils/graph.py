@@ -4,6 +4,8 @@ from typing import Any
 import msal
 import requests
 
+from premises_mfareset.utils.auth_methods import FIDO2_METHOD_TYPE
+
 
 def require_env(name: str) -> str:
     value = os.getenv(name, "").strip()
@@ -97,6 +99,9 @@ def delete_user_authentication_method(
 
     elif authentication_method_type.endswith("microsoftAuthenticatorAuthenticationMethod"):
         url = f"{base_url}/microsoftAuthenticatorMethods/{authentication_method_id}"
+
+    elif authentication_method_type == FIDO2_METHOD_TYPE:
+        url = f"{base_url}/fido2Methods/{authentication_method_id}"
 
     else:
         raise ValueError(

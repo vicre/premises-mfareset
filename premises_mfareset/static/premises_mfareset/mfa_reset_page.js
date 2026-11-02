@@ -5,12 +5,49 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!form || !statusBox) return;
 
-    form.addEventListener("submit", async function (event) {
+    const submitButton = form.querySelector('button[type="submit"]');
+    const passkeyCheckbox = document.getElementById("include_fido2");
+    const confirmation = document.getElementById("reset-confirmation");
+    const confirmButton = document.getElementById("confirm-reset");
+    const cancelButton = document.getElementById("cancel-reset");
+    let submitting = false;
+    let pendingFormData = null;
+
+    function showStatus(kind, message) {
+        const alert = document.createElement("div");
+        alert.className = `alert alert-${kind}`;
+        alert.textContent = message;
+        statusBox.replaceChildren(alert);
+    }
+
+    form.addEventListener("submit", function (event) {
         event.preventDefault();
+        if (submitting) return;
 
-        statusBox.innerHTML = '<div class="alert alert-info">Resetting MFA...</div>';
+        const target = form.elements.namedItem("target_upn").value;
+        const scope = passkeyCheckbox.checked
+            ? `Alle brugerens passkeys / FIDO2-sikkerhedsnøgler slettes også (${form.dataset.passkeyCount} fundet ved opslag).`
+            : "Passkeys / FIDO2-sikkerhedsnøgler bevares.";
+        document.getElementById("reset-confirmation-target").textContent = target;
+        document.getElementById("reset-confirmation-scope").textContent = scope;
+        pendingFormData = new FormData(form);
+        confirmation.showModal();
+    });
 
-        const formData = new FormData(form);
+    cancelButton.addEventListener("click", () => confirmation.close());
+    confirmation.addEventListener("close", () => { pendingFormData = null; });
+
+    confirmButton.addEventListener("click", async function () {
+        if (submitting || !pendingFormData) return;
+        // Use the scope shown in the dialog, captured before controls are disabled.
+        const formData = pendingFormData;
+        pendingFormData = null;
+        confirmation.close();
+        submitting = true;
+        submitButton.disabled = true;
+        passkeyCheckbox.disabled = true;
+        showStatus("info", "Resetting MFA...");
+        let succeeded = false;
 
         try {
             const response = await fetch(form.action, {
@@ -24,12 +61,19 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                statusBox.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                succeeded = true;
+                window.location.reload();
             } else {
-                statusBox.innerHTML = `<div class="alert alert-danger">${data.message || "Reset failed."}</div>`;
+                showStatus("danger", data.message || "Reset failed.");
             }
         } catch (error) {
-            statusBox.innerHTML = `<div class="alert alert-danger">Unexpected error: ${error}</div>`;
+            showStatus("danger", `Unexpected error: ${error}`);
+        } finally {
+            if (!succeeded) {
+                submitting = false;
+                submitButton.disabled = false;
+                passkeyCheckbox.disabled = false;
+            }
         }
     });
 });

@@ -5,7 +5,6 @@ from premises_mfareset.utils.graph import (
     delete_user_authentication_method,
     list_user_authentication_methods,
 )
-from premises_mfareset.utils.auth_methods import prepare_auth_methods
 
 
 def reset_mfa_methods(
@@ -38,8 +37,7 @@ def reset_mfa_methods(
 
         for attempt in range(verify_retries):
             current_methods = list_user_authentication_methods(upn)
-            current_pretty = prepare_auth_methods(current_methods)
-            current_ids = {m["id"] for m in current_pretty}
+            current_ids = {m.get("id") for m in current_methods}
 
             if method_id not in current_ids:
                 confirmed_deleted = True

@@ -1,10 +1,11 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout
+from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.http import HttpResponse
 from active_directory.utils.user_is_member_of_admin_group_in_ad import user_is_member_of_admin_group_in_ad
 from premises_mfareset.utils.graph import list_user_authentication_methods
-from premises_mfareset.utils.auth_methods import prepare_auth_methods
+from premises_mfareset.utils.auth_methods import FIDO2_METHOD_TYPE, prepare_auth_methods
 from premises_mfareset.utils.reset_mfa import reset_mfa_methods
 from premises_mfareset.utils.entra_auth import (
     build_auth_url,
@@ -199,6 +200,7 @@ def mfa_reset_page(request):
     is_allowed = False
     authorizing_groups = []
     auth_methods = None
+    fido2_count = 0
 
     if target_upn:
         target_user = _get_target_user_from_ad(target_upn)
@@ -214,6 +216,7 @@ def mfa_reset_page(request):
 
             # Allows the IT personal to see the user's auth methods
             auth_methods = list_user_authentication_methods(target_upn)
+            fido2_count = sum(method.get("@odata.type") == FIDO2_METHOD_TYPE for method in auth_methods)
             
             for method in auth_methods:
 
@@ -239,6 +242,7 @@ def mfa_reset_page(request):
             "is_allowed": is_allowed,
             "authorizing_groups": authorizing_groups,
             "auth_methods": auth_methods if auth_methods is not None else None,
+            "fido2_count": fido2_count,
         }
     )
 
@@ -248,6 +252,7 @@ def mfa_reset_page(request):
 def reset_mfa(request):
     admin_upn = _normalize_upn(request.user.username)
     target_upn = _normalize_upn(request.POST.get("target_upn", "")) if request.method == "POST" else ""
+    include_fido2 = request.method == "POST" and request.POST.get("include_fido2") == "1"
 
     allowed_ous: list[str] = []
     target_user = None
@@ -259,6 +264,7 @@ def reset_mfa(request):
         actor_upn=admin_upn,
         target_upn=target_upn,
     )
+    _update_mfa_reset_log(log_entry, reset_result_payload={"step": "started", "include_fido2": include_fido2})
 
     if request.method != "POST":
         _update_mfa_reset_log(
@@ -371,15 +377,15 @@ def reset_mfa(request):
             log_entry,
             list_methods_payload=methods,
             message="Listed authentication methods from Microsoft Graph",
-            reset_result_payload={"step": "list_user_authentication_methods_completed"},
+            reset_result_payload={"step": "list_user_authentication_methods_completed", "include_fido2": include_fido2},
         )
 
-        mfa_methods = prepare_auth_methods(methods)
+        mfa_methods = prepare_auth_methods(methods, include_fido2=include_fido2)
         _update_mfa_reset_log(
             log_entry,
             prepared_methods_payload=mfa_methods,
             message="Prepared MFA methods for reset",
-            reset_result_payload={"step": "prepare_auth_methods_completed"},
+            reset_result_payload={"step": "prepare_auth_methods_completed", "include_fido2": include_fido2},
         )
 
         message = reset_mfa_methods(target_upn, mfa_methods)
@@ -391,8 +397,10 @@ def reset_mfa(request):
             reset_result_payload={
                 "step": "reset_mfa_methods_completed",
                 "message": message,
+                "include_fido2": include_fido2,
             },
         )
+        messages.success(request, message)
 
         return JsonResponse(
             {
@@ -420,6 +428,7 @@ def reset_mfa(request):
             reset_result_payload={
                 "step": "exception",
                 "message": message,
+                "include_fido2": include_fido2,
             },
         )
 
